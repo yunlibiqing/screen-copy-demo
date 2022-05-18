@@ -1,0 +1,59 @@
+<template>
+    <canvas id="canvas" style="border: 1px solid red;"></canvas>
+</template>
+
+<script>
+
+export default {
+  name: 'ScreenCopy',
+  data () {
+    return {
+      socketUri: 'ws://127.0.0.1:9002/'
+    }
+  },
+  mounted () {
+    this.start()
+  },
+  beforeDestroy () {
+  },
+  methods: {
+    start () {
+      console.log('start')
+      var BLANK_IMG = 'data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw=='
+      var canvas = document.getElementById('canvas')
+      var g = canvas.getContext('2d')
+      //   var ws = new WebSocket('ws://127.0.0.1:9002', 'minicap')
+      var ws = new WebSocket('ws://127.0.0.1:9002/')
+      ws.binaryType = 'blob'
+      ws.onclose = function () {
+        console.log('onclose', arguments)
+      }
+      ws.onerror = function () {
+        console.log('onerror', arguments)
+      }
+      ws.onmessage = function (message) {
+        var blob = new Blob([message.data], {type: 'image/jpeg'})
+        var URL = window.URL || window.webkitURL
+        var img = new Image()
+        img.onload = function () {
+          console.log(img.width, img.height)
+          canvas.width = img.width
+          canvas.height = img.height
+          g.drawImage(img, 0, 0)
+          img.onload = null
+          img.src = BLANK_IMG
+          img = null
+          u = null
+          blob = null
+        }
+        var u = URL.createObjectURL(blob)
+        img.src = u
+      }
+      ws.onopen = function () {
+        console.log('onopen', arguments)
+        ws.send('1920x1080/0')
+      }
+    }
+  }
+}
+</script>
