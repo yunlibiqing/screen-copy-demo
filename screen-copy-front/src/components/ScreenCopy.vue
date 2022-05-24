@@ -8,7 +8,11 @@ export default {
   name: 'ScreenCopy',
   data () {
     return {
-      socketUri: 'ws://127.0.0.1:9002/'
+      socketUri: 'ws://127.0.0.1:9002/',
+      canvas: undefined,
+      ws: undefined,
+      width: 0,
+      height: 0
     }
   },
   mounted () {
@@ -21,9 +25,13 @@ export default {
       console.log('start')
       var BLANK_IMG = 'data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw=='
       var canvas = document.getElementById('canvas')
+      this.canvas = canvas
+      this.mouseDownListenStart()
+      this.mouseUpListenStart()
       var g = canvas.getContext('2d')
       //   var ws = new WebSocket('ws://127.0.0.1:9002', 'minicap')
       var ws = new WebSocket('ws://127.0.0.1:9002/')
+      this.ws = ws
       ws.binaryType = 'blob'
       ws.onclose = function () {
         console.log('onclose', arguments)
@@ -48,11 +56,64 @@ export default {
         }
         var u = URL.createObjectURL(blob)
         img.src = u
+        // ws.send('ok')
       }
       ws.onopen = function () {
         console.log('onopen', arguments)
         ws.send('1920x1080/0')
       }
+    },
+    mouseDownListenStart () {
+      this.canvas.addEventListener('mousedown', this.mouseDownMethod)
+    },
+    mouseDownMethod (e) {
+      this.mouseMoveListenStart()
+      // console.log('this is mousedown')
+      const pos = {
+        msg_type: 2,
+        msg_inject_touch_action: 0,
+        msg_inject_touch_position: {
+          x: e.offsetX, y: e.offsetY, width: this.canvas.width, height: this.canvas.height
+        }
+      }
+      // console.log('send data')
+
+      this.ws.send(JSON.stringify(pos))
+      // console.log(pos)
+    },
+    mouseUpListenStart () {
+      this.canvas.addEventListener('mouseup', (e) => {
+        this.mouseMoveListenEnd()
+        // console.log('this is mouseup')
+        const pos = {
+          msg_type: 2,
+          msg_inject_touch_action: 1,
+          msg_inject_touch_position: {
+            x: e.offsetX, y: e.offsetY, width: this.canvas.width, height: this.canvas.height
+          }
+        }
+        // console.log(e)
+        this.ws.send(JSON.stringify(pos))
+      })
+    },
+    mouseMoveListenStart () {
+      this.canvas.addEventListener('mousemove', this.mouseMoveMethod)
+    },
+    mouseMoveMethod (e) {
+      // console.log('this is mousemove')
+      const pos = {
+        msg_type: 2,
+        msg_inject_touch_action: 2,
+        msg_inject_touch_position: {
+          x: e.offsetX, y: e.offsetY, width: this.canvas.width, height: this.canvas.height
+        }
+      }
+      // console.log(pos)
+      this.ws.send(JSON.stringify(pos))
+    },
+    mouseMoveListenEnd () {
+      // console.log('remove')
+      this.canvas.removeEventListener('mousemove', this.mouseMoveMethod)
     }
   }
 }
