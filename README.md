@@ -9,3 +9,7 @@ npm run dev
 server启动
 安装依赖
 python3 server.py
+
+
+
+音频传输需要先运行server目录下sndcpy.bat的脚本在手机端安装一个apk
