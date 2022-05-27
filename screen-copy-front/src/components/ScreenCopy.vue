@@ -1,9 +1,12 @@
 <template>
-    <canvas id="canvas" style="border: 1px solid red;"></canvas>
+    <div>
+      <canvas id="canvas" style="border: 1px solid red;"></canvas>
+      <button type="button" @click="audioStart">点击播放</button>
+    </div>
 </template>
 
 <script>
-
+import PCMPlayer from '../utils/player-pcm'
 export default {
   name: 'ScreenCopy',
   data () {
@@ -11,16 +14,44 @@ export default {
       socketUri: 'ws://127.0.0.1:9002/',
       canvas: undefined,
       ws: undefined,
+      audioWs: undefined,
       width: 0,
       height: 0
     }
   },
   mounted () {
     this.start()
+    // this.audioStart()
   },
   beforeDestroy () {
   },
   methods: {
+    audioStart () {
+      var audioWs = new WebSocket('ws://127.0.0.1:9002/audio')
+      var player = new PCMPlayer({
+        encoding: '16bitInt',
+        channels: 2,
+        sampleRate: 48000,
+        flushingTime: 100
+      })
+      audioWs.binaryType = 'arraybuffer'
+      audioWs.onclose = function () {
+        console.log('onclose', arguments)
+      }
+      audioWs.onerror = function () {
+        console.log('onerror', arguments)
+      }
+      audioWs.onmessage = function (message) {
+        // console.log(message)
+        // var blob = new Blob([message.data])
+        var data = new Uint16Array(message.data)
+        // console.log(data)
+        player.feed(data)
+      }
+      audioWs.onopen = function () {
+        console.log('onopen')
+      }
+    },
     start () {
       console.log('start')
       var BLANK_IMG = 'data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw=='

@@ -34,10 +34,16 @@ async def start_server():
              "com.genymobile.scrcpy.Server 1.24 log_level=info")
 
 
+async def start_audio_server():
+    os.popen("adb forward tcp:28200 localabstract:sndcpy")
+    os.popen("adb shell am start com.rom1v.sndcpy/.MainActivity")
+
+
 async def recv_data(websocket, writer):
     while True:
         msg = await websocket.recv()
         try:
+            print(msg)
             json_msg = json.loads(msg)
             if json_msg["msg_inject_touch_position"]["width"] < json_msg["msg_inject_touch_position"]["height"]:
                 pass
@@ -59,6 +65,7 @@ async def recv_data(websocket, writer):
                 int.to_bytes(1, length=4, byteorder='big')
             writer.write(t)
         except Exception as err:
+            print('this is error')
             print(str(err))
 
 
@@ -118,17 +125,35 @@ async def send_data(websocket, reader):
                     readFrameBytes += len(chunk) - cursor
                     cursor = len(chunk)
 
+async def send_audio_data(websocket, reader):
+    print('start revc')
+    while True:
+        chunk = await reader.read(1440)
+        # print(chunk)
+        await websocket.send(chunk)
+
 
 async def echo(websocket, path):
-    t1 = asyncio.create_task(start_server())
-    await asyncio.sleep(1)
-    reader, writer = await asyncio.open_connection("127.0.0.1", 22222, loop=loop)
-    control_reader, control_writer = await asyncio.open_connection("127.0.0.1", 22222, loop=loop)
-    t2 = asyncio.create_task(send_data(websocket, reader))
-    t3 = asyncio.create_task(recv_data(websocket, control_writer))
-    await t1
-    await t2
-    await t3
+    print(path)
+    if path == '/':
+        pass
+        t1 = asyncio.create_task(start_server())
+        await asyncio.sleep(1)
+        reader, writer = await asyncio.open_connection("127.0.0.1", 22222, loop=loop)
+        control_reader, control_writer = await asyncio.open_connection("127.0.0.1", 22222, loop=loop)
+        t2 = asyncio.create_task(send_data(websocket, reader))
+        t3 = asyncio.create_task(recv_data(websocket, control_writer))
+        await t1
+        await t2
+        await t3
+    elif path == '/audio':
+        t4 = asyncio.create_task(start_audio_server())
+        await asyncio.sleep(1)
+        audio_reader, audio_writer = await asyncio.open_connection("127.0.0.1", 28200, loop=loop)
+        print(audio_reader)
+        t5 = asyncio.create_task(send_audio_data(websocket, audio_reader))
+        await t4
+        await t5
 
 
 loop.run_until_complete(websockets.serve(echo, "127.0.0.1", 9002))
