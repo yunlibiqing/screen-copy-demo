@@ -1,6 +1,5 @@
 @echo off
 if not defined ADB set ADB=adb
-if not defined VLC set VLC="C:\Program Files\VideoLAN\VLC\vlc.exe"
 if not defined SNDCPY_APK set SNDCPY_APK=sndcpy.apk
 if not defined SNDCPY_PORT set SNDCPY_PORT=28200
 
@@ -18,14 +17,8 @@ if not "%1"=="" (
     %ADB% %serial% install -t -g %SNDCPY_APK% || goto :error
 )
 %ADB% %serial% shell appops set com.rom1v.sndcpy PROJECT_MEDIA allow
-%ADB% %serial% forward tcp:%SNDCPY_PORT% localabstract:sndcpy || goto :error
-%ADB% %serial% shell am start com.rom1v.sndcpy/.MainActivity || goto :error
 
 timeout 2
-
-echo Playing audio...
-%VLC% -Idummy --demux rawaud --network-caching=0 --play-and-exit tcp://localhost:%SNDCPY_PORT%
-goto :EOF
 
 :error
 echo Failed with error #%errorlevel%.

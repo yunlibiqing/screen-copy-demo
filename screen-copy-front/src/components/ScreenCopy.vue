@@ -1,7 +1,8 @@
 <template>
     <div>
       <canvas id="canvas" style="border: 1px solid red;"></canvas>
-      <button type="button" @click="audioStart">点击播放</button>
+      <button type="button" @click="installSndcpyApk">first:点击安装apk</button>
+      <button type="button" @click="audioStart">second:点击连接声音</button>
     </div>
 </template>
 
@@ -26,6 +27,21 @@ export default {
   beforeDestroy () {
   },
   methods: {
+    installSndcpyApk () {
+      var sndcpyApkWs = new WebSocket('ws://127.0.0.1:9002/install')
+      sndcpyApkWs.onclose = function () {
+        console.log('onclose', arguments)
+      }
+      sndcpyApkWs.onerror = function () {
+        console.log('onerror', arguments)
+      }
+      sndcpyApkWs.onmessage = function (message) {
+        console.log(message)
+      }
+      sndcpyApkWs.onopen = function () {
+        console.log('onopen')
+      }
+    },
     audioStart () {
       var audioWs = new WebSocket('ws://127.0.0.1:9002/audio')
       var player = new PCMPlayer({

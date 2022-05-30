@@ -39,6 +39,10 @@ async def start_audio_server():
     os.popen("adb shell am start com.rom1v.sndcpy/.MainActivity")
 
 
+async def install_sndcpy_apk():
+    os.popen("sndcpy.bat")
+
+
 async def recv_data(websocket, writer):
     while True:
         msg = await websocket.recv()
@@ -154,6 +158,8 @@ async def echo(websocket, path):
         t5 = asyncio.create_task(send_audio_data(websocket, audio_reader))
         await t4
         await t5
+    elif path == '/install':
+        await asyncio.create_task(install_sndcpy_apk())
 
 
 loop.run_until_complete(websockets.serve(echo, "127.0.0.1", 9002))
